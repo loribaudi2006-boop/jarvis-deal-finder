@@ -13,12 +13,11 @@ function median(sorted) {
 // resale estimate from active-listing prices (they sit above true market -> apply factor)
 export function resaleFromActive(prices, resaleCfg) {
   if (prices.length < resaleCfg.minComparables) return null;
-  // trim outliers: keep 10th..75th percentile band
-  const lo = prices[Math.floor(prices.length * 0.1)];
-  const hi = prices[Math.floor(prices.length * 0.75)];
-  const band = prices.filter((p) => p >= lo && p <= hi);
-  const med = median(band.length ? band : prices);
-  return med == null ? null : +(med * resaleCfg.activeMedianFactor).toFixed(2);
+  // conservative "quick flip" price: a low percentile of active listings,
+  // discounted further (active listings sit above what actually sells fast).
+  const pct = resaleCfg.activePercentile ?? 0.3;
+  const p = prices[Math.floor(prices.length * pct)];
+  return p == null ? null : +(p * resaleCfg.activeMedianFactor).toFixed(2);
 }
 
 export function evaluate(item, detail, resaleEUR, cfg) {

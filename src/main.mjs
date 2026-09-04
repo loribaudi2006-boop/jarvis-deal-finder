@@ -74,19 +74,24 @@ async function onePass() {
         if (si.rating != null) item.seller = { ...item.seller, ...si };
       }
 
-      let resale = baseResale;
       let resaleRange = null;
       if (cfg.resale.useGeminiSecondOpinion && gemini.hasKeys()) {
         try {
-          const r = await gemini.resaleSecondOpinion(item);
-          if (r) {
-            resaleRange = r;
-            const mid = (r.min + r.max) / 2;
-            resale = resale == null ? mid : +((resale + mid) / 2).toFixed(2);
-          }
+          resaleRange = await gemini.resaleSecondOpinion(item);
         } catch (e) {
           console.error("resale 2nd opinion failed:", e.message);
         }
+      }
+
+      // resale figure: prefer Gemini's conservative (low) end; fall back to the
+      // active-listing estimate only when Gemini isn't required.
+      let resale;
+      if (resaleRange) {
+        resale = Math.min(resaleRange.min, baseResale ?? resaleRange.min);
+      } else if (cfg.resale.requireGemini) {
+        continue; // no trustworthy resale estimate -> stay silent
+      } else {
+        resale = baseResale;
       }
 
       const ev = evaluate(item, { shipping: null }, resale, cfg);
@@ -100,9 +105,15 @@ async function onePass() {
         caption = gemini.localReport({ item, eval: ev, resaleRange });
       }
 
+      console.log(`ALERT: "${item.title}" acquisto ${ev.buyTotal}€ / rivendita ${ev.resaleEUR}€ / margine ${ev.margin}€`);
       await tg.sendPhoto(item.photo, caption);
       hits++;
       await sleep(1200);
+      if (hits >= (cfg.maxAlertsPerRun ?? 6)) {
+        console.log("max alerts per run reached, stopping");
+        await save(cfg.state.seenFile, seen);
+        return;
+      }
     }
   }
 
@@ -114,7 +125,7 @@ if (await seedIfFirstRun()) {
   process.exit(0);
 }
 
-const passes = Math.max(1, cfg.loop.maxPassesPerRun);
+const passes = Math.max(1, Number(process.env.JARVIS_PASSES) || cfg.loop.maxPassesPerRun);
 for (let i = 0; i < passes; i++) {
   const t0 = Date.now();
   try {

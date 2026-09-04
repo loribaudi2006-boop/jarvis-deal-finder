@@ -12,11 +12,15 @@
 
   "resale": {
     "method": "vinted_active_median",
-    "activeMedianFactor": 0.90,
-    "minComparables": 4,
+    "activePercentile": 0.3,
+    "activeMedianFactor": 0.8,
+    "minComparables": 6,
     "geminiBufferEUR": 8,
-    "useGeminiSecondOpinion": true
+    "useGeminiSecondOpinion": true,
+    "requireGemini": true
   },
+
+  "maxAlertsPerRun": 6,
 
   "state": {
     "seenFile": "data/seen.json",
