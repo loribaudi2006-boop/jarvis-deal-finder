@@ -68,6 +68,11 @@ export async function searchItems(domain, { q, priceTo, perPage = 20 }) {
     totalItemPrice: num(it.total_item_price) ?? num(it.price),
     currency: it.currency || "EUR",
     photo: it.photo?.full_size_url || it.photo?.url || null,
+    photoThumb:
+      it.photo?.thumbnails?.find((t) => t.type === "thumb310")?.url ||
+      it.photo?.url ||
+      it.photo?.full_size_url ||
+      null,
     url: it.url || `https://${domain}/items/${it.id}`,
     userId: it.user?.id ?? null,
     seller: {
