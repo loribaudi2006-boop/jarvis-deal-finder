@@ -8,43 +8,73 @@ import { load, save, purge } from "./state.mjs";
 const cfg = JSON.parse(await readFile(new URL("../config.json", import.meta.url), "utf8"));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Gate before spending a Gemini call: rough margin from the cheap active-median
+// estimate must be within `geminiBuffer` of the target (Gemini may push it up or down).
+const GEMINI_BUFFER = cfg.resale.geminiBufferEUR ?? 8;
+
+async function collect() {
+  const bySearch = [];
+  for (const s of cfg.searches) {
+    try {
+      const items = await searchItems(cfg.vinted.domain, { ...s, perPage: cfg.vinted.perPage });
+      bySearch.push({ s, items });
+    } catch (e) {
+      console.error(`search "${s.q}" failed:`, e.message);
+    }
+  }
+  return bySearch;
+}
+
+async function seedIfFirstRun() {
+  const seen = await load(cfg.state.seenFile);
+  if (Object.keys(seen).length > 0) return false;
+  console.log("first run — seeding seen list without alerting");
+  await initSession(cfg.vinted.domain);
+  const bySearch = await collect();
+  const now = Date.now();
+  for (const { items } of bySearch) for (const it of items) seen[it.id] = now;
+  await save(cfg.state.seenFile, seen);
+  if (tg.configured())
+    await tg.sendMessage(
+      `🤖 <b>Jarvis attivato.</b> Sto monitorando ${cfg.searches.length} ricerche su Vinted. ` +
+        `Ti avviso solo quando trovo un affare con margine ≥ ${cfg.minProfitEUR} €.`
+    );
+  console.log(`seeded ${Object.keys(seen).length} listings`);
+  return true;
+}
+
 async function onePass() {
   await initSession(cfg.vinted.domain);
   const seen = purge(await load(cfg.state.seenFile), cfg.state.purgeAfterHours);
+  const bySearch = await collect();
   let hits = 0;
 
-  for (const s of cfg.searches) {
-    let items = [];
+  for (const { s, items } of bySearch) {
+    const fresh = items.filter((it) => !seen[it.id] && it.price && (!s.priceTo || it.price <= s.priceTo));
+    for (const it of fresh) seen[it.id] = Date.now(); // mark now so a crash won't re-alert
+    if (!fresh.length) continue;
+
+    let comparables;
     try {
-      items = await searchItems(cfg.vinted.domain, { ...s, perPage: cfg.vinted.perPage });
-    } catch (e) {
-      console.error(`search "${s.q}" failed:`, e.message);
-      continue;
+      comparables = await activePrices(cfg.vinted.domain, s.q, s.priceTo);
+    } catch {
+      comparables = [];
     }
+    const baseResale = resaleFromActive(comparables, cfg.resale);
 
-    let comparables = null;
+    for (const item of fresh) {
+      // cheap gate
+      const rough = evaluate(item, { shipping: null }, baseResale, cfg);
+      if (rough.reason === "no_resale_estimate") continue;
+      if (rough.margin < cfg.minProfitEUR - GEMINI_BUFFER) continue;
 
-    for (const item of items) {
-      if (seen[item.id]) continue;
-      seen[item.id] = Date.now(); // mark early so a crash doesn't re-alert
-
-      if (!item.price || (s.priceTo && item.price > s.priceTo)) continue;
-
-      if (!comparables) {
-        try {
-          comparables = await activePrices(cfg.vinted.domain, s.q, s.priceTo);
-        } catch {
-          comparables = [];
-        }
-      }
-      let resale = resaleFromActive(comparables, cfg.resale);
-
-      const detail = { description: "", shipping: null };
+      // expensive enrichment only for plausible deals
       if (item.userId) {
         const si = await sellerInfo(cfg.vinted.domain, item.userId);
         if (si.rating != null) item.seller = { ...item.seller, ...si };
       }
 
+      let resale = baseResale;
       let resaleRange = null;
       if (cfg.resale.useGeminiSecondOpinion && gemini.hasKeys()) {
         try {
@@ -59,29 +89,29 @@ async function onePass() {
         }
       }
 
-      const ev = evaluate(item, detail, resale, cfg);
+      const ev = evaluate(item, { shipping: null }, resale, cfg);
       if (!ev.ok) continue;
 
       let caption;
       try {
-        caption = await gemini.buildReport({ item, detail, eval: ev, resaleRange });
+        caption = await gemini.buildReport({ item, detail: { description: "" }, eval: ev, resaleRange });
       } catch (e) {
-        console.error("report failed, using fallback:", e.message);
-        caption =
-          `Ho trovato questo:\n<b>${item.title}</b>\n` +
-          `Acquisto: ${ev.itemPrice}€ + ${ev.protection}€ comm. + ${ev.shipping}€ sped. = <b>${ev.buyTotal}€</b>\n` +
-          `Rivendita stimata: ${ev.resaleEUR}€ — Margine: <b>${ev.margin}€</b>\n` +
-          `${item.url}`;
+        console.error("report failed, using local fallback:", e.message);
+        caption = gemini.localReport({ item, eval: ev, resaleRange });
       }
 
       await tg.sendPhoto(item.photo, caption);
       hits++;
-      await sleep(1200); // stay polite with Telegram + Vinted
+      await sleep(1200);
     }
   }
 
   await save(cfg.state.seenFile, seen);
   console.log(`pass done — ${hits} alert(s), ${Object.keys(seen).length} tracked`);
+}
+
+if (await seedIfFirstRun()) {
+  process.exit(0);
 }
 
 const passes = Math.max(1, cfg.loop.maxPassesPerRun);

@@ -1,7 +1,11 @@
 // Gemini: builds the studied report + optional resale second opinion.
 // Rotates across the provided API keys on quota / transient errors.
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+// primary first, then higher-free-quota fallbacks on 429
+const MODELS = (process.env.GEMINI_MODEL || "gemini-flash-latest,gemini-flash-lite-latest")
+  .split(/[,\s]+/)
+  .map((s) => s.trim())
+  .filter(Boolean);
 const KEYS = (process.env.GEMINI_API_KEY || "")
   .split(/[,\s]+/)
   .map((s) => s.trim())
@@ -12,13 +16,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function call(payload) {
   let lastErr;
-  const attempts = Math.max(KEYS.length, 1) * 3;
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    const key = KEYS[keyIdx % KEYS.length];
-    keyIdx++;
+  const combos = [];
+  for (const model of MODELS) for (const key of KEYS) combos.push({ model, key });
+  if (!combos.length) throw new Error("Gemini: no API key configured");
+
+  for (let attempt = 0; attempt < combos.length; attempt++) {
+    const { model, key } = combos[(keyIdx + attempt) % combos.length];
     try {
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -27,18 +33,19 @@ async function call(payload) {
         }
       );
       if (res.status === 429 || res.status >= 500) {
-        lastErr = new Error(`Gemini ${res.status}`);
-        await sleep(700 * (attempt + 1));
+        lastErr = new Error(`Gemini ${res.status} (${model})`);
+        await sleep(400 * (attempt + 1));
         continue;
       }
       if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
       const data = await res.json();
+      keyIdx++;
       return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
     } catch (e) {
       lastErr = e;
     }
   }
-  throw lastErr || new Error("Gemini: all keys failed");
+  throw lastErr || new Error("Gemini: all combos failed");
 }
 
 function greeting(d = new Date()) {
@@ -74,12 +81,30 @@ export async function resaleSecondOpinion(item) {
   return null;
 }
 
+function ratingLineFor(item) {
+  const pct = item.seller.rating != null ? Math.round(item.seller.rating * 100) : null;
+  return pct != null
+    ? `${(item.seller.rating * 5).toFixed(1)}/5 (${item.seller.count ?? "?"} valutazioni, ${pct}% positivi)`
+    : "sconosciuto";
+}
+
+// used when Gemini is unavailable (quota/errors) — same 6-block structure, no API
+export function localReport({ item, eval: ev, resaleRange }) {
+  const resale = resaleRange ? `${resaleRange.min}–${resaleRange.max} €` : `${ev.resaleEUR} €`;
+  return (
+    `${greeting()} Signore, ho trovato questo:\n\n` +
+    `📦 <b>${item.title}</b>\n\n` +
+    `💰 Acquisto: ${ev.itemPrice} € + ${ev.protection} € (commissione Vinted) + ${ev.shipping} € (spedizione) = <b>${ev.buyTotal} €</b>\n` +
+    `📈 Rivendita stimata: ${resale}\n` +
+    `🟢 Margine stimato: <b>${ev.margin} €</b>\n\n` +
+    `⭐ Venditore: ${ratingLineFor(item)}\n\n` +
+    `⚠️ Problemi/risoluzioni: valutare di persona da foto e descrizione dell'annuncio.\n\n` +
+    `🔗 ${item.url}`
+  );
+}
+
 export async function buildReport({ item, detail, eval: ev, resaleRange }) {
-  const ratingPct = item.seller.rating != null ? Math.round(item.seller.rating * 100) : null;
-  const ratingLine =
-    ratingPct != null
-      ? `${(item.seller.rating * 5).toFixed(1)}/5 (${item.seller.count ?? "?"} valutazioni, ${ratingPct}% positivi)`
-      : "sconosciuto";
+  const ratingLine = ratingLineFor(item);
 
   const facts = {
     saluto: greeting(),

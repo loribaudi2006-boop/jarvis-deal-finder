@@ -14,6 +14,7 @@
     "method": "vinted_active_median",
     "activeMedianFactor": 0.90,
     "minComparables": 4,
+    "geminiBufferEUR": 8,
     "useGeminiSecondOpinion": true
   },
 
@@ -23,8 +24,8 @@
   },
 
   "loop": {
-    "passIntervalSeconds": 60,
-    "maxPassesPerRun": 4
+    "passIntervalSeconds": 70,
+    "maxPassesPerRun": 3
   },
 
   "searches": [
