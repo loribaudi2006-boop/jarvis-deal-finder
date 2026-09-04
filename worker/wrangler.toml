@@ -1,0 +1,15 @@
+name = "jarvis-watchdog"
+main = "watchdog.js"
+compatibility_date = "2024-11-01"
+
+[triggers]
+crons = ["*/2 * * * *"]
+
+# Set secrets/vars in the dashboard or:
+#   npx wrangler secret put GH_TOKEN
+#   npx wrangler deploy
+[vars]
+GH_REPO = "loribaudi2006-boop/jarvis-deal-finder"
+WORKFLOW = "jarvis.yml"
+BRANCH = "main"
+MAX_GAP_MIN = "4"

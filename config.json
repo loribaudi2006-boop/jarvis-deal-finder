@@ -1,0 +1,40 @@
+{
+  "minProfitEUR": 10,
+
+  "vinted": {
+    "domain": "www.vinted.it",
+    "perPage": 20,
+    "currency": "EUR",
+    "buyerProtectionRate": 0.05,
+    "buyerProtectionFixedEUR": 0.70,
+    "defaultShippingEUR": 3.99
+  },
+
+  "resale": {
+    "method": "vinted_active_median",
+    "activeMedianFactor": 0.90,
+    "minComparables": 4,
+    "useGeminiSecondOpinion": true
+  },
+
+  "state": {
+    "seenFile": "data/seen.json",
+    "purgeAfterHours": 46
+  },
+
+  "loop": {
+    "passIntervalSeconds": 60,
+    "maxPassesPerRun": 4
+  },
+
+  "searches": [
+    { "q": "lego set nuovo sigillato", "priceTo": 60 },
+    { "q": "trapano bosch professional", "priceTo": 70 },
+    { "q": "airpods pro 2", "priceTo": 120 },
+    { "q": "nintendo switch", "priceTo": 130 },
+    { "q": "gopro hero", "priceTo": 150 },
+    { "q": "dyson v", "priceTo": 150 },
+    { "q": "kindle paperwhite", "priceTo": 70 },
+    { "q": "instax mini", "priceTo": 45 }
+  ]
+}

@@ -1,0 +1,41 @@
+name: jarvis
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *" # backup; the Cloudflare watchdog is the real pacemaker
+
+concurrency:
+  group: jarvis-run
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  hunt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Jarvis loop
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: bash run_loop.sh
+
+      - name: Re-dispatch (keep the chain alive if scheduler is slow)
+        if: always()
+        run: gh workflow run jarvis.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,11 @@
+{
+  "name": "jarvis-deal-finder",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/main.mjs",
+    "once": "MAX_PASSES=1 node src/main.mjs"
+  }
+}
