@@ -1,15 +1,13 @@
 {
   "minProfitEUR": 10,
-
   "vinted": {
     "domain": "www.vinted.it",
     "perPage": 20,
     "currency": "EUR",
     "buyerProtectionRate": 0.05,
-    "buyerProtectionFixedEUR": 0.70,
+    "buyerProtectionFixedEUR": 0.7,
     "defaultShippingEUR": 3.99
   },
-
   "resale": {
     "method": "vinted_active_median",
     "activePercentile": 0.3,
@@ -19,38 +17,65 @@
     "useGeminiSecondOpinion": true,
     "requireGemini": true
   },
-
   "maxAlertsPerRun": 6,
-
   "state": {
     "seenFile": "data/seen.json",
     "purgeAfterHours": 46
   },
-
   "loop": {
     "passIntervalSeconds": 70,
     "maxPassesPerRun": 3
   },
-
   "searches": [
-    { "q": "lego set nuovo sigillato", "priceTo": 60 },
-    { "q": "trapano bosch professional", "priceTo": 70 },
-    { "q": "airpods pro 2", "priceTo": 120 },
-    { "q": "nintendo switch", "priceTo": 130 },
-    { "q": "gopro hero", "priceTo": 150 },
-    { "q": "dyson v", "priceTo": 150 },
-    { "q": "kindle paperwhite", "priceTo": 70 },
-    { "q": "instax mini", "priceTo": 45 }
+    {
+      "q": "sneakers nike jordan",
+      "priceTo": 70
+    },
+    {
+      "q": "scarpe adidas samba",
+      "priceTo": 50
+    },
+    {
+      "q": "scarpe salomon xt 6",
+      "priceTo": 80
+    },
+    {
+      "q": "new balance 550",
+      "priceTo": 60
+    }
   ],
-
   "defaultSearches": [
-    { "q": "lego set nuovo sigillato", "priceTo": 60 },
-    { "q": "trapano bosch professional", "priceTo": 70 },
-    { "q": "airpods pro 2", "priceTo": 120 },
-    { "q": "nintendo switch", "priceTo": 130 },
-    { "q": "gopro hero", "priceTo": 150 },
-    { "q": "dyson v", "priceTo": 150 },
-    { "q": "kindle paperwhite", "priceTo": 70 },
-    { "q": "instax mini", "priceTo": 45 }
+    {
+      "q": "lego set nuovo sigillato",
+      "priceTo": 60
+    },
+    {
+      "q": "trapano bosch professional",
+      "priceTo": 70
+    },
+    {
+      "q": "airpods pro 2",
+      "priceTo": 120
+    },
+    {
+      "q": "nintendo switch",
+      "priceTo": 130
+    },
+    {
+      "q": "gopro hero",
+      "priceTo": 150
+    },
+    {
+      "q": "dyson v",
+      "priceTo": 150
+    },
+    {
+      "q": "kindle paperwhite",
+      "priceTo": 70
+    },
+    {
+      "q": "instax mini",
+      "priceTo": 45
+    }
   ]
 }
