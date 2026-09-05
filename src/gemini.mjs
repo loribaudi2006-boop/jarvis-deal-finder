@@ -165,3 +165,40 @@ export async function buildReport({ item, detail, eval: ev, resaleRange }) {
 export function hasKeys() {
   return KEYS.length > 0;
 }
+
+// Interprets a free-text Telegram message from the owner as an instruction
+// to change which Vinted searches Jarvis monitors. Returns
+// { replace: bool, searches: [{q, priceTo}], reply: string } or null.
+export async function interpretSearchRequest(text, currentSearches, defaultSearches) {
+  const prompt =
+    "Sei Jarvis, un bot che monitora Vinted per trovare affari da rivendere con margine (flipping). " +
+    "Il tuo proprietario ti ha scritto un messaggio per cambiare cosa cercare. " +
+    "Traduci la richiesta in una lista di ricerche Vinted concrete.\n\n" +
+    "Regole:\n" +
+    "- Ogni ricerca e' un oggetto {\"q\": \"<query in italiano, 2-4 parole, come si cercherebbe su Vinted>\", " +
+    "\"priceTo\": <prezzo massimo di ACQUISTO ragionevole in EUR per quella categoria, intero>}.\n" +
+    "- Se la richiesta e' una categoria generica (es. 'scarpe', 'polo', 'videogiochi', 'console', 'elettronica'), " +
+    "genera 2-5 ricerche specifiche e sensate dentro quella categoria (es. 'scarpe' -> marche/tipi comuni da rivendere), " +
+    "con priceTo adatti a quella categoria.\n" +
+    "- Se dice 'tutto', 'default', 'resetta', 'ricomincia' o simili, rispondi con replace:true e searches uguale " +
+    "esattamente a DEFAULT_SEARCHES.\n" +
+    "- Se il messaggio implica SOSTITUIRE le ricerche attuali (es. 'cerca solo X', 'cambia ricerca in X', o non specifica), " +
+    "usa replace:true. Se implica AGGIUNGERE (es. 'aggiungi anche X', 'cerca anche X'), usa replace:false.\n" +
+    "- Se il messaggio non ha senso come richiesta di ricerca (es. saluti, domande generiche), rispondi con " +
+    '{"searches": [], "replace": false, "reply": "<risposta breve e cortese in italiano che spiega cosa puoi fare"}.\n' +
+    "- \"reply\" e' sempre un breve messaggio di conferma in italiano, tono formale (dai del 'Signore'), da mandare su Telegram.\n\n" +
+    'Rispondi SOLO con JSON: {"replace": bool, "searches": [{"q":.., "priceTo":..}, ...], "reply": "..."}.\n\n' +
+    `MESSAGGIO: "${text}"\n\n` +
+    `RICERCHE_ATTUALI: ${JSON.stringify(currentSearches)}\n` +
+    `DEFAULT_SEARCHES: ${JSON.stringify(defaultSearches)}`;
+
+  const txt = await call({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
+  });
+  try {
+    const j = JSON.parse(txt);
+    if (Array.isArray(j.searches)) return j;
+  } catch {}
+  return null;
+}

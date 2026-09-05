@@ -41,5 +41,16 @@
     { "q": "dyson v", "priceTo": 150 },
     { "q": "kindle paperwhite", "priceTo": 70 },
     { "q": "instax mini", "priceTo": 45 }
+  ],
+
+  "defaultSearches": [
+    { "q": "lego set nuovo sigillato", "priceTo": 60 },
+    { "q": "trapano bosch professional", "priceTo": 70 },
+    { "q": "airpods pro 2", "priceTo": 120 },
+    { "q": "nintendo switch", "priceTo": 130 },
+    { "q": "gopro hero", "priceTo": 150 },
+    { "q": "dyson v", "priceTo": 150 },
+    { "q": "kindle paperwhite", "priceTo": 70 },
+    { "q": "instax mini", "priceTo": 45 }
   ]
 }

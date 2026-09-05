@@ -10,9 +10,9 @@ node src/main.mjs
 STATUS=$?
 
 # --- persist state ---
-if [[ -n "$(git status --porcelain data/)" ]]; then
-  git add data/
-  git commit -m "state: update seen listings [skip ci]" || true
+if [[ -n "$(git status --porcelain data/ config.json)" ]]; then
+  git add data/ config.json
+  git commit -m "state: update seen listings / search config [skip ci]" || true
   for attempt in 1 2 3 4 5; do
     git pull --rebase --autostash origin "${GITHUB_REF_NAME:-main}" && break
     sleep $((attempt * 3))

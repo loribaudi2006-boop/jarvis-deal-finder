@@ -4,9 +4,12 @@ import { resaleFromActive, evaluate } from "./pricing.mjs";
 import * as gemini from "./gemini.mjs";
 import * as tg from "./telegram.mjs";
 import { load, save, purge } from "./state.mjs";
+import { processCommands } from "./commands.mjs";
 
 const cfg = JSON.parse(await readFile(new URL("../config.json", import.meta.url), "utf8"));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+await processCommands(cfg);
 
 // Gate before spending a Gemini call: rough margin from the cheap active-median
 // estimate must be within `geminiBuffer` of the target (Gemini may push it up or down).

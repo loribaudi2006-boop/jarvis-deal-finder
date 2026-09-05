@@ -41,3 +41,18 @@ export async function sendMessage(text) {
 export function configured() {
   return Boolean(TOKEN && CHAT_ID);
 }
+
+export function chatId() {
+  return CHAT_ID;
+}
+
+export async function getUpdates(offset) {
+  const params = new URLSearchParams({ timeout: "0" });
+  if (offset != null) params.set("offset", String(offset));
+  const res = await fetch(`${api("getUpdates")}?${params}`, {
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) throw new Error(`getUpdates ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.result || [];
+}
