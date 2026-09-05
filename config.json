@@ -42,6 +42,26 @@
     {
       "q": "new balance 550",
       "priceTo": 60
+    },
+    {
+      "q": "scarpe hogan uomo",
+      "priceTo": 70
+    },
+    {
+      "q": "scarpe geox uomo",
+      "priceTo": 40
+    },
+    {
+      "q": "scarpe dr martens",
+      "priceTo": 60
+    },
+    {
+      "q": "scarpe birkenstock uomo",
+      "priceTo": 45
+    },
+    {
+      "q": "mocassini prada uomo",
+      "priceTo": 100
     }
   ],
   "defaultSearches": [
