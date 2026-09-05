@@ -28,24 +28,8 @@
   },
   "searches": [
     {
-      "q": "sneakers nike jordan",
-      "priceTo": 70
-    },
-    {
-      "q": "scarpe adidas samba",
+      "q": "zaino sprayground",
       "priceTo": 50
-    },
-    {
-      "q": "scarpe salomon xt 6",
-      "priceTo": 80
-    },
-    {
-      "q": "new balance 550",
-      "priceTo": 60
-    },
-    {
-      "q": "scarpe hogan uomo",
-      "priceTo": 70
     }
   ],
   "defaultSearches": [
