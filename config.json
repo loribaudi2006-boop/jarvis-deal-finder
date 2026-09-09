@@ -28,8 +28,20 @@
   },
   "searches": [
     {
-      "q": "zaino sprayground",
+      "q": "felpa nike vintage",
+      "priceTo": 30
+    },
+    {
+      "q": "tuta nike uomo",
+      "priceTo": 40
+    },
+    {
+      "q": "scarpe nike air max",
       "priceTo": 50
+    },
+    {
+      "q": "giacca nike windrunner",
+      "priceTo": 35
     }
   ],
   "defaultSearches": [
