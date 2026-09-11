@@ -28,20 +28,16 @@
   },
   "searches": [
     {
-      "q": "felpa nike vintage",
-      "priceTo": 30
+      "q": "playstation 5 console",
+      "priceTo": 320
     },
     {
-      "q": "tuta nike uomo",
-      "priceTo": 40
+      "q": "ps5 console",
+      "priceTo": 300
     },
     {
-      "q": "scarpe nike air max",
-      "priceTo": 50
-    },
-    {
-      "q": "giacca nike windrunner",
-      "priceTo": 35
+      "q": "playstation 5 digital",
+      "priceTo": 260
     }
   ],
   "defaultSearches": [
