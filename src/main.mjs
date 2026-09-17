@@ -15,6 +15,19 @@ await processCommands(cfg);
 // estimate must be within `geminiBuffer` of the target (Gemini may push it up or down).
 const GEMINI_BUFFER = cfg.resale.geminiBufferEUR ?? 8;
 
+const OUTSIDE_PAYMENT_RE = (cfg.excludeOutsidePaymentKeywords?.length)
+  ? new RegExp(cfg.excludeOutsidePaymentKeywords.map((k) => k.toLowerCase()).join("|"), "i")
+  : null;
+
+function mentionsOutsidePayment(title) {
+  return OUTSIDE_PAYMENT_RE ? OUTSIDE_PAYMENT_RE.test(title || "") : false;
+}
+
+function hasFiveStarSeller(item) {
+  const rating = item.seller?.rating;
+  return rating != null && rating >= (cfg.sellerMinRatingFor5Stars ?? 0.95);
+}
+
 async function collect() {
   const bySearch = [];
   for (const s of cfg.searches) {
@@ -53,7 +66,13 @@ async function onePass() {
   let hits = 0;
 
   for (const { s, items } of bySearch) {
-    const fresh = items.filter((it) => !seen[it.id] && it.price && (!s.priceTo || it.price <= s.priceTo));
+    const fresh = items.filter(
+      (it) =>
+        !seen[it.id] &&
+        it.price &&
+        (!s.priceTo || it.price <= s.priceTo) &&
+        !mentionsOutsidePayment(it.title)
+    );
     for (const it of fresh) seen[it.id] = Date.now(); // mark now so a crash won't re-alert
     if (!fresh.length) continue;
 
@@ -76,6 +95,7 @@ async function onePass() {
         const si = await sellerInfo(cfg.vinted.domain, item.userId);
         if (si.rating != null) item.seller = { ...item.seller, ...si };
       }
+      if (!hasFiveStarSeller(item)) continue;
 
       let resaleRange = null;
       if (cfg.resale.useGeminiSecondOpinion && gemini.hasKeys()) {

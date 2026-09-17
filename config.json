@@ -17,7 +17,24 @@
     "useGeminiSecondOpinion": true,
     "requireGemini": true
   },
-  "maxAlertsPerRun": 6,
+  "maxAlertsPerRun": 3,
+  "sellerMinRatingFor5Stars": 0.95,
+  "excludeOutsidePaymentKeywords": [
+    "bonifico",
+    "paypal",
+    "pay pal",
+    "contanti",
+    "fuori vinted",
+    "fuori piattaforma",
+    "no vinted",
+    "senza vinted",
+    "pagamento diretto",
+    "pagamento esterno",
+    "pagamento privato",
+    "trattativa privata",
+    "no spese vinted",
+    "evitiamo commissioni"
+  ],
   "state": {
     "seenFile": "data/seen.json",
     "purgeAfterHours": 46
@@ -29,11 +46,11 @@
   "searches": [
     {
       "q": "playstation 5 console",
-      "priceTo": 320
+      "priceTo": 309
     },
     {
       "q": "ps5 console",
-      "priceTo": 300
+      "priceTo": 309
     },
     {
       "q": "playstation 5 digital",
